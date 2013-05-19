@@ -2464,6 +2464,57 @@ test_71() {
 }
 run_test 71 "correct file map just after write operation is finished"
 
+test_72() {
+
+	local proc_ofile="mdt.*.exports.*.open_files"
+	local fcount=2048
+	declare -a fd_list
+	declare -a fid_list
+	rm -rf $DIR/$tdir
+	test_mkdir -p $DIR/$tdir
+
+	ulimit -n 8096
+	for (( i=0; i < $fcount; i++ )) ; do
+		touch $DIR/$tdir/f_$i
+		exec {FD}<$DIR/$tdir/f_$i
+		fd_list[i]=$FD
+	done
+
+	fid_list=($($LCTL get_param -n $proc_ofile))
+
+	fid_nr=$(echo ${fid_list[@]}] | wc -w)
+
+	# Possible errors in openfiles fid list.
+	# 1. Missing fids. Check 1
+	# 2. Extra fids. Check 1
+	# 3. Duplicated fid. Check 2
+	# 4. Invalid fids. Check 2
+	# 5. Valid fid, points to some other file. Check 3
+
+	# Check 1
+	[ $fid_nr -ne $fcount ] &&
+		error "Number of Open files is incorrect"
+
+	for (( i=0; i < $fcount; i++ )) ; do
+		FD=${fd_list[i]}
+		exec {FD}</dev/null
+		filename=$($LFS fid2path $DIR2 ${fid_list[i]})
+
+		# Check 2
+		rm --interactive=no $filename
+		[ $? -ne 0 ] &&
+			error "Nonexisting fid ${fid_list[i]} listed."
+	done
+
+	# Check 3
+	ls_op=$(ls $DIR2/$tdir | wc -l)
+	[ $ls_op -ne 0 ] &&
+		error "Some openfiles are missing in lproc output"
+
+	rm -rf $DIR/$tdir
+}
+run_test 72 "Verify open file for 2048 files"
+
 log "cleanup: ======================================================"
 
 [ "$(mount | grep $MOUNT2)" ] && umount $MOUNT2
