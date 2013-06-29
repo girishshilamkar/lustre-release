@@ -2484,12 +2484,12 @@ test_72() {
 
 	fid_nr=$(echo ${fid_list[@]}] | wc -w)
 
-	# Possible errors in openfiles fid list.
-	# 1. Missing fids. Check 1
-	# 2. Extra fids. Check 1
-	# 3. Duplicated fid. Check 2
-	# 4. Invalid fids. Check 2
-	# 5. Valid fid, points to some other file. Check 3
+	# Possible errors in openfiles FID list.
+	# 1. Missing FIDs. Check 1
+	# 2. Extra FIDs. Check 1
+	# 3. Duplicated FID. Check 2
+	# 4. Invalid FIDs. Check 2
+	# 5. Valid FID, points to some other file. Check 3
 
 	# Check 1
 	[ $fid_nr -ne $fcount ] &&

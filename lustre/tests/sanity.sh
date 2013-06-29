@@ -8882,17 +8882,22 @@ test_154b() {
 run_test 154b "Open-by-FID for remote directory"
 
 test_154d() {
-	local proc_ofile="mdt.*.exports.0@lo.open_files"
 	rm -f $DIR/$tfile
 	touch $DIR/$tfile
-
+	nid="0@lo"
+#nid=$($LCTL list_nids)
+	local proc_ofile="mdt.*.exports.$nid.open_files"
+	
 	fid=$($LFS path2fid $DIR/$tfile)
 	# Open the file
 	exec 7<$DIR/$tfile
-	fid_list=$($LCTL get_param $proc_ofile)
+#fid_list=$(do_facet $SINGLEMDS $LCTL get_param $proc_ofile)
+	fid_list=$(do_facet mds2 $LCTL get_param $proc_ofile)
 	echo $fid_list | grep $fid
 	rc=$?
-
+	
+	echo $SINGLEMDS	
+	echo "fid_list=$fid_list"
 	exec 7</dev/null
 	if [ $rc -ne 0 ]; then
 		error "FID $fid not found in open files list $fid_list"
