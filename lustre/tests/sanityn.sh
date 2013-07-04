@@ -2466,10 +2466,13 @@ run_test 71 "correct file map just after write operation is finished"
 
 test_72() {
 
-	local proc_ofile="mdt.*.exports.*.open_files"
+	remote_mds_nodsh && skip "remote MDS with nodsh" && return
+	nid=$($LCTL list_nids | sed  "s/\./\\\./g")
+	local proc_ofile="mdt.*.exports.'$nid'.open_files"
 	local fcount=2048
 	declare -a fd_list
 	declare -a fid_list
+
 	rm -rf $DIR/$tdir
 	test_mkdir -p $DIR/$tdir
 
@@ -2480,7 +2483,7 @@ test_72() {
 		fd_list[i]=$FD
 	done
 
-	fid_list=($($LCTL get_param -n $proc_ofile))
+	fid_list=($(do_facet $SINGLEMDS $LCTL get_param -n $proc_ofile))
 
 	fid_nr=$(echo ${fid_list[@]}] | wc -w)
 
